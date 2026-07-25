@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracker</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#222;
+}
+
+body{
+    display:flex;
+}
+
+.player{
+    width:50%;
+    height:100%;
+    border:2px solid #444;
+    display:flex;
+    flex-direction:column;
+    background:#2f2f2f;
+}
+
+.player-name{
+    width:100%;
+    border:none;
+    outline:none;
+    text-align:center;
+    font-size:clamp(18px,2vw,32px);
+    padding:1vh;
+}
+
+.life{
+    position:relative;
+    height:22%;
+    background:#888;
+    overflow:hidden;
+}
+
+.life button{
+    position:absolute;
+    top:0;
+    width:50%;
+    height:100%;
+    border:none;
+    background:transparent;
+    font-size:clamp(40px,8vw,120px);
+    color:white;
+    cursor:pointer;
+}
+
+.life .minus{
+    left:0;
+}
+
+.life .plus{
+    right:0;
+}
+
+.value{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    font-size:clamp(50px,9vw,150px);
+    color:white;
+    font-weight:bold;
+    pointer-events:none;
+}
+
+.elements{
+    flex:1;
+    display:flex;
+    position:relative;
+}
+
+.gear{
+    position:absolute;
+    top:8px;
+    right:8px;
+    z-index:20;
+    font-size:clamp(20px,2vw,35px);
+    cursor:pointer;
+    color: black !important;
+    background:white !important;
+    border: 2px solid #222;
+    border-radius:50%;
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.element{
+    flex:1;
+    position:relative;
+    background:#666;
+    border:1px solid rgba(255,255,255,.2);
+}
+
+.element-name{
+    position:absolute;
+    top:5px;
+    width:100%;
+    text-align:center;
+    font-size:clamp(14px,1.2vw,22px);
+    color:white;
+    font-weight:bold;
+    z-index:10;
+    pointer-events:none;
+    text-shadow:0 0 5px black;
+}
+
+.element button{
+    position:absolute;
+    width:100%;
+    left:0;
+    border:none;
+    background:transparent;
+    color:white;
+    cursor:pointer;
+    font-size:clamp(40px,6vw,90px);
+}
+
+.element .plus{
+    top:0;
+    height:50%;
+}
+
+.element .minus{
+    bottom:0;
+    height:50%;
+}
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.75);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+}
+
+.modal-content{
+    background:#333;
+    padding:25px;
+    border-radius:12px;
+    display:grid;
+    grid-template-columns:repeat(3,120px);
+    gap:15px;
+}
+
+.color{
+    height:90px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:white;
+    cursor:pointer;
+    border-radius:8px;
+    font-weight:bold;
+    border:3px solid white;
+}
+
+#reset{
+    position:fixed;
+    left:50%;
+    top:1vh;
+    transform:translateX(-50%);
+    z-index:200;
+
+    border:none;
+    border-radius:50%;
+
+    padding:5px 10px;
+
+    font-size:24px;
+    font-weight:bold;
+
+    background:#1976d2;
+    color:white;
+
+    cursor:pointer;
+
+    box-shadow:0 4px 12px rgba(0,0,0,.35);
+}
+
+#reset:active{
+    transform:translateX(-50%) scale(.96);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="player">
+    <input class="player-name" placeholder="Jogador 1">
+
+    <div class="life counter" data-value="7">
+        <button class="minus">−</button>
+        <div class="value">7</div>
+        <button class="plus">+</button>
+    </div>
+
+    <div class="elements">
+
+        <div class="element counter" data-value="0">
+            <div class="gear">⚙</div>
+            <div class="element-name"></div>
+            <button class="plus">+</button>
+            <div class="value">0</div>
+            <button class="minus">−</button>
+        </div>
+
+        <div class="element counter" data-value="0">
+            <div class="gear">⚙</div>
+            <div class="element-name"></div>
+            <button class="plus">+</button>
+            <div class="value">0</div>
+            <button class="minus">−</button>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="player">
+
+    <input class="player-name" placeholder="Jogador 2">
+
+    <div class="life counter" data-value="7">
+        <button class="minus">−</button>
+        <div class="value">7</div>
+        <button class="plus">+</button>
+    </div>
+
+    <div class="elements">
+
+        <div class="element counter" data-value="0">
+            <div class="gear">⚙</div>
+            <div class="element-name"></div>
+            <button class="plus">+</button>
+            <div class="value">0</div>
+            <button class="minus">−</button>
+        </div>
+
+        <div class="element counter" data-value="0">
+            <div class="gear">⚙</div>
+            <div class="element-name"></div>
+            <button class="plus">+</button>
+            <div class="value">0</div>
+            <button class="minus">−</button>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal" id="modal">
+    <div class="modal-content"></div>
+</div>
+
+<button id="reset">↺</button>
+
+<script>
+
+const colors = [
+    {name:'Água',color:'#2196F3'},
+    {name:'Fogo',color:'#D32F2F'},
+    {name:'Terra',color:'#795548'},
+    {name:'Trevas',color:'#111'},
+    {name:'Vento',color:'#43A047'},
+    {name:'Luz',color:'#ECECEC',text:'#000'}
+];
+
+let currentElement=null;
+
+document.querySelectorAll(".counter").forEach(counter=>{
+
+    const valueEl = counter.querySelector(".value");
+
+    const isLife = counter.classList.contains("life");
+
+    const min = isLife ? -999 : 0;
+    const max = isLife ? 999 : 20;
+
+    function refresh(){
+        valueEl.textContent = counter.dataset.value;
+    }
+
+    counter.querySelector(".plus").onclick = ()=>{
+
+        let value = Number(counter.dataset.value);
+
+        if(value < max){
+            value++;
+        }
+
+        counter.dataset.value = value;
+
+        refresh();
+
+    };
+
+    counter.querySelector(".minus").onclick = ()=>{
+
+        let value = Number(counter.dataset.value);
+
+        if(value > min){
+            value--;
+        }
+
+        counter.dataset.value = value;
+
+        refresh();
+
+    };
+
+});
+
+const modal=document.getElementById("modal");
+const content=modal.querySelector(".modal-content");
+
+colors.forEach(c=>{
+
+    const div=document.createElement("div");
+
+    div.className="color";
+    div.style.background=c.color;
+    div.style.color=c.text || "white";
+    div.innerHTML=c.name;
+
+    div.onclick=()=>{
+
+        currentElement.style.background=c.color;
+        currentElement.querySelector(".element-name").innerHTML=c.name;
+        currentElement.style.color=c.text || "white";
+
+        currentElement.querySelector(".value").style.color=c.text || "white";
+        currentElement.querySelector(".element-name").style.color=c.text || "white";
+
+        currentElement.querySelectorAll("button").forEach(b=>{
+            b.style.color=c.text || "white";
+        });
+
+        modal.style.display="none";
+
+    };
+
+    content.appendChild(div);
+
+});
+
+document.querySelectorAll(".gear").forEach(gear=>{
+
+    gear.onclick=()=>{
+
+        currentElement = gear.closest(".element");
+
+        modal.style.display="flex";
+
+    }
+
+});
+
+modal.onclick=e=>{
+    if(e.target===modal)
+        modal.style.display="none";
+};
+
+document.getElementById("reset").onclick = () => {
+
+    document.querySelectorAll(".life.counter").forEach(counter=>{
+
+        counter.dataset.value = 7;
+        counter.querySelector(".value").textContent = 7;
+
+    });
+
+    document.querySelectorAll(".element.counter").forEach(counter=>{
+
+        counter.dataset.value = 0;
+        counter.querySelector(".value").textContent = 0;
+
+    });
+
+};
+
+</script>
+
+</body>
+</html>
