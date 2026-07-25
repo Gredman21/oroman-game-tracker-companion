@@ -428,11 +428,12 @@ body{
     font-weight:normal;
 }
 
-.element button::after{
+.element button::after,
+.life button::after{
     content:attr(data-macro);
 
     position:absolute;
-    right:clamp(5px, .7vw, 12px);
+    right:clamp(1rem, 9.5vw, 8rem);
     top:50%;
 
     transform:translateY(-50%);
@@ -442,7 +443,7 @@ body{
     text-overflow:ellipsis;
     white-space:nowrap;
 
-    font-size:clamp(9px, .8vw, 14px);
+    font-size:clamp(12px, .8vw, 20px);
     font-weight:bold;
 
     opacity:0;
@@ -453,8 +454,18 @@ body{
     transition:opacity .15s;
 }
 
-body.show-macro-labels .element button::after{
+body.show-macro-labels .element button::after,
+body.show-macro-labels .life button::after{
     opacity:.9;
+}
+
+.modal.life-mode .color-options{
+    display:none;
+}
+
+.life .delta{
+    left:calc(50% + clamp(35px, 5vw, 85px));
+    top:calc(50% - clamp(28px, 3.5vw, 55px));
 }
 
 </style>
@@ -465,9 +476,11 @@ body.show-macro-labels .element button::after{
 <div class="player">
     <input class="player-name" placeholder="Jogador 1">
 
-    <div class="life counter" data-value="7">
+    <div class="life counter" data-counter-id="player1-life" data-value="7">
+        <div class="gear">⚙</div>
         <button class="minus">−</button>
         <div class="value">7</div>
+        <div class="delta"></div>
         <button class="plus">+</button>
     </div>
 
@@ -499,9 +512,11 @@ body.show-macro-labels .element button::after{
 
     <input class="player-name" placeholder="Jogador 2">
 
-    <div class="life counter" data-value="7">
+    <div class="life counter" data-counter-id="player2-life" data-value="7">
+        <div class="gear">⚙</div>
         <button class="minus">−</button>
         <div class="value">7</div>
+        <div class="delta"></div>
         <button class="plus">+</button>
     </div>
 
@@ -532,7 +547,7 @@ body.show-macro-labels .element button::after{
 <div class="modal" id="modal">
     <div class="modal-content">
 
-        <h2>Configurar elemento</h2>
+        <h2 id="modal-title">Configurar Elemento</h2>
 
         <div class="color-options"></div>
 
@@ -618,6 +633,13 @@ const elementCounters = [
     ...document.querySelectorAll(".element.counter")
 ];
 
+const macroCounters = [
+    ...document.querySelectorAll(".counter")
+];
+
+const modalTitle =
+    document.getElementById("modal-title");
+
 let currentElement = null;
 let captureAction = null;
 let savedMacros = loadMacros();
@@ -651,9 +673,7 @@ document.querySelectorAll(".counter").forEach(counter => {
         counter.dataset.value = value;
         refresh();
 
-        if (!isLife) {
-            updateDelta(counter, 1);
-        }
+        updateDelta(counter, 1);
     };
 
     counter.querySelector(".minus").onclick = () => {
@@ -669,9 +689,7 @@ document.querySelectorAll(".counter").forEach(counter => {
         counter.dataset.value = value;
         refresh();
 
-        if (!isLife) {
-            updateDelta(counter, -1);
-        }
+        updateDelta(counter, -1);
     };
 
 });
@@ -680,7 +698,7 @@ document.querySelectorAll(".counter").forEach(counter => {
    DELTAS
 ========================= */
 
-elementCounters.forEach(counter => {
+macroCounters.forEach(counter => {
 
     counter.deltaState = {
         value:0,
@@ -740,6 +758,33 @@ function updateDelta(counter, change) {
 
 }
 
+function clearCounterDelta(counter) {
+
+    const delta =
+        counter.querySelector(".delta");
+
+    const state =
+        counter.deltaState;
+
+    if (!delta || !state) {
+        return;
+    }
+
+    clearTimeout(state.timeout);
+
+    state.value = 0;
+    state.timeout = null;
+
+    delta.textContent = "";
+
+    delta.classList.remove(
+        "show",
+        "positive",
+        "negative"
+    );
+
+}
+
 /* =========================
    CORES DA MODAL
 ========================= */
@@ -758,7 +803,10 @@ colors.forEach(colorData => {
 
     colorButton.onclick = () => {
 
-        if (!currentElement) {
+        if (
+            !currentElement ||
+            currentElement.classList.contains("life")
+        ) {
             return;
         }
 
@@ -802,7 +850,10 @@ colors.forEach(colorData => {
 
 function updateSelectedColor() {
 
-    if (!currentElement) {
+    if (
+        !currentElement ||
+        currentElement.classList.contains("life")
+    ) {
         return;
     }
 
@@ -831,12 +882,33 @@ document.querySelectorAll(".gear").forEach(gear => {
 
     gear.onclick = event => {
 
+        event.preventDefault();
         event.stopPropagation();
 
         currentElement =
-            gear.closest(".element.counter");
+            gear.closest(".counter");
 
-        updateSelectedColor();
+        if (!currentElement) {
+            return;
+        }
+
+        const isLife =
+            currentElement.classList.contains("life");
+
+        modal.classList.toggle(
+            "life-mode",
+            isLife
+        );
+
+        modalTitle.textContent =
+            isLife
+                ? "Configurar vida"
+                : "Configurar elemento";
+
+        if (!isLife) {
+            updateSelectedColor();
+        }
+
         updateMacroFields();
 
         modal.classList.add("open");
@@ -847,6 +919,7 @@ document.querySelectorAll(".gear").forEach(gear => {
 closeModalButton.onclick = () => {
 
     modal.classList.remove("open");
+    modal.classList.remove("life-mode");
     currentElement = null;
 
 };
@@ -1150,7 +1223,7 @@ document.addEventListener("keydown", event => {
 
     const matchingActions = [];
 
-    elementCounters.forEach(counter => {
+    macroCounters.forEach(counter => {
 
         const counterId =
             counter.dataset.counterId;
@@ -1194,7 +1267,7 @@ document.addEventListener("keydown", event => {
 
 function applyMacroLabels() {
 
-    elementCounters.forEach(counter => {
+    macroCounters.forEach(counter => {
 
         const counterId =
             counter.dataset.counterId;
@@ -1253,6 +1326,8 @@ document.getElementById("reset").onclick = () => {
         counter.dataset.value = 7;
         counter.querySelector(".value").textContent = 7;
 
+        clearCounterDelta(counter);
+
     });
 
     elementCounters.forEach(counter => {
@@ -1260,21 +1335,7 @@ document.getElementById("reset").onclick = () => {
         counter.dataset.value = 0;
         counter.querySelector(".value").textContent = 0;
 
-        const delta =
-            counter.querySelector(".delta");
-
-        clearTimeout(counter.deltaState.timeout);
-
-        counter.deltaState.value = 0;
-        counter.deltaState.timeout = null;
-
-        delta.textContent = "";
-
-        delta.classList.remove(
-            "show",
-            "positive",
-            "negative"
-        );
+        clearCounterDelta(counter);
 
     });
 
