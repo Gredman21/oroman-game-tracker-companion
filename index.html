@@ -79,6 +79,7 @@ body{
     color:white;
     font-weight:bold;
     pointer-events:none;
+    z-index:98;
 }
 
 .elements{
@@ -134,16 +135,54 @@ body{
     color:white;
     cursor:pointer;
     font-size:clamp(40px,6vw,90px);
+    transition: background .08s;
 }
 
-.element .plus{
+.element button:active{
+    background:rgba(115, 115, 115, 0.7);
+}
+
+.element button.plus{
     top:0;
     height:50%;
 }
 
-.element .minus{
+.element button.minus{
     bottom:0;
     height:50%;
+}
+
+.delta{
+    position:absolute;
+
+    /* Posiciona o delta acima e à direita do número */
+    left:calc(50% + clamp(28px, 4.5vw, 75px));
+    top:calc(50% - clamp(22px, 3vw, 45px));
+
+    font-size:clamp(26px,1.6vw,40px);
+    font-weight:bold;
+    line-height:1;
+
+    pointer-events:none;
+    opacity:0;
+
+    transition:opacity .15s;
+    z-index:99;
+
+    text-shadow:0 0px 10px rgba(0,0,0,.8);
+    -webkit-text-stroke: 1px white;
+}
+
+.delta.show{
+    opacity:1;
+}
+
+.delta.positive{
+    color:#00a143;
+}
+
+.delta.negative{
+    color:#930000;
 }
 
 .modal{
@@ -225,6 +264,7 @@ body{
             <div class="element-name"></div>
             <button class="plus">+</button>
             <div class="value">0</div>
+            <div class="delta"></div>
             <button class="minus">−</button>
         </div>
 
@@ -233,6 +273,7 @@ body{
             <div class="element-name"></div>
             <button class="plus">+</button>
             <div class="value">0</div>
+            <div class="delta"></div>
             <button class="minus">−</button>
         </div>
 
@@ -257,6 +298,7 @@ body{
             <div class="element-name"></div>
             <button class="plus">+</button>
             <div class="value">0</div>
+            <div class="delta"></div>
             <button class="minus">−</button>
         </div>
 
@@ -265,6 +307,7 @@ body{
             <div class="element-name"></div>
             <button class="plus">+</button>
             <div class="value">0</div>
+            <div class="delta"></div>
             <button class="minus">−</button>
         </div>
 
@@ -282,10 +325,10 @@ body{
 
 const colors = [
     {name:'Água',color:'#2196F3'},
-    {name:'Fogo',color:'#D32F2F'},
+    {name:'Fogo',color:'#eb4646'},
     {name:'Terra',color:'#795548'},
     {name:'Trevas',color:'#111'},
-    {name:'Vento',color:'#43A047'},
+    {name:'Vento',color:'#56ba5a'},
     {name:'Luz',color:'#ECECEC',text:'#000'}
 ];
 
@@ -297,7 +340,7 @@ document.querySelectorAll(".counter").forEach(counter=>{
 
     const isLife = counter.classList.contains("life");
 
-    const min = isLife ? -999 : 0;
+    const min = 0;
     const max = isLife ? 999 : 20;
 
     function refresh(){
@@ -308,13 +351,18 @@ document.querySelectorAll(".counter").forEach(counter=>{
 
         let value = Number(counter.dataset.value);
 
-        if(value < max){
-            value++;
-        }
+        if (value >= max)
+            return;
+
+        value++;
 
         counter.dataset.value = value;
 
         refresh();
+
+        if (!isLife) {
+            updateDelta(counter, 1);
+        }
 
     };
 
@@ -322,13 +370,18 @@ document.querySelectorAll(".counter").forEach(counter=>{
 
         let value = Number(counter.dataset.value);
 
-        if(value > min){
-            value--;
-        }
+        if (value <= min)
+            return;
+
+        value--;
 
         counter.dataset.value = value;
 
         refresh();
+
+        if (!isLife) {
+            updateDelta(counter, -1);
+        }
 
     };
 
@@ -393,14 +446,76 @@ document.getElementById("reset").onclick = () => {
 
     });
 
-    document.querySelectorAll(".element.counter").forEach(counter=>{
-
+    document.querySelectorAll(".element.counter").forEach(counter => {
         counter.dataset.value = 0;
         counter.querySelector(".value").textContent = 0;
 
+        const delta = counter.querySelector(".delta");
+
+        if (counter.deltaState) {
+            clearTimeout(counter.deltaState.timeout);
+            counter.deltaState.value = 0;
+            counter.deltaState.timeout = null;
+        }
+
+        delta.textContent = "";
+        delta.classList.remove(
+            "show",
+            "positive",
+            "negative"
+        );
     });
 
 };
+
+document.querySelectorAll(".element.counter").forEach(counter => {
+    counter.deltaState = {
+        value: 0,
+        timeout: null
+    };
+});
+
+function updateDelta(counter, change) {
+    const delta = counter.querySelector(".delta");
+    const state = counter.deltaState;
+
+    if (!delta || !state) {
+        return;
+    }
+
+    state.value += change;
+
+    clearTimeout(state.timeout);
+
+    delta.classList.remove("positive", "negative");
+
+    if (state.value === 0) {
+        delta.textContent = "";
+        delta.classList.remove("show");
+    } else {
+        delta.textContent =
+            state.value > 0
+                ? `+${state.value}`
+                : String(state.value);
+
+        delta.classList.add(
+            state.value > 0 ? "positive" : "negative"
+        );
+
+        delta.classList.add("show");
+    }
+
+    state.timeout = setTimeout(() => {
+        state.value = 0;
+        delta.textContent = "";
+        delta.classList.remove(
+            "show",
+            "positive",
+            "negative"
+        );
+        state.timeout = null;
+    }, 3000);
+}
 
 </script>
 
