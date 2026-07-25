@@ -58,7 +58,6 @@ body{
     border:none;
     background:transparent;
     font-size:clamp(40px,8vw,120px);
-    color:white;
     cursor:pointer;
 }
 
@@ -68,6 +67,11 @@ body{
 
 .life .plus{
     right:0;
+}
+
+.life .value,
+.life button{
+    color: #eade00 !important;
 }
 
 .value{
@@ -159,7 +163,7 @@ body{
     left:calc(50% + clamp(28px, 4.5vw, 75px));
     top:calc(50% - clamp(22px, 3vw, 45px));
 
-    font-size:clamp(26px,1.6vw,40px);
+    font-size:clamp(30px,1.6vw,45px);
     font-weight:bold;
     line-height:1;
 
@@ -169,7 +173,7 @@ body{
     transition:opacity .15s;
     z-index:99;
 
-    text-shadow:0 0px 10px rgba(0,0,0,.8);
+    text-shadow:0 0px 10px rgb(0,0,0);
     -webkit-text-stroke: 1px white;
 }
 
