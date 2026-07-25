@@ -199,25 +199,162 @@ body{
     z-index:100;
 }
 
+.modal.open{
+    display:flex;
+}
+
 .modal-content{
+    width:min(520px, 92vw);
+    max-height:92vh;
+    overflow-y:auto;
+
     background:#333;
+    color:white;
+
     padding:25px;
     border-radius:12px;
+
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+
+    box-shadow:0 10px 35px rgba(0,0,0,.5);
+}
+
+.modal-content h2{
+    text-align:center;
+    font-size:24px;
+}
+
+.color-options{
     display:grid;
-    grid-template-columns:repeat(3,120px);
+    grid-template-columns:repeat(3, minmax(90px, 1fr));
     gap:15px;
 }
 
 .color{
+    position:relative;
     height:90px;
+
     display:flex;
     justify-content:center;
     align-items:center;
+
     color:white;
     cursor:pointer;
     border-radius:8px;
     font-weight:bold;
-    border:3px solid white;
+
+    border:3px solid transparent;
+
+    transition:
+        transform .12s,
+        border-color .12s,
+        box-shadow .12s;
+}
+
+.color:hover{
+    transform:scale(1.03);
+}
+
+.color.selected{
+    border-color:#ffd54f;
+    box-shadow:
+        0 0 0 3px rgba(255,213,79,.35),
+        0 0 18px rgba(255,213,79,.7);
+
+    transform:scale(1.04);
+}
+
+.color.selected::after{
+    content:"✓";
+
+    position:absolute;
+    top:5px;
+    right:8px;
+
+    color:#ffd54f;
+    font-size:22px;
+    font-weight:bold;
+
+    text-shadow:0 1px 4px black;
+}
+
+.macro-settings{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+
+    padding-top:18px;
+    border-top:1px solid rgba(255,255,255,.2);
+}
+
+.macro-row{
+    display:grid;
+    grid-template-columns:1fr 190px;
+    align-items:center;
+    gap:15px;
+
+    font-size:16px;
+}
+
+.macro-field{
+    min-height:42px;
+    padding:8px 12px;
+
+    background:#222;
+    color:white;
+
+    border:2px solid #666;
+    border-radius:7px;
+
+    font-size:14px;
+    font-weight:bold;
+    cursor:pointer;
+
+    transition:
+        border-color .12s,
+        background .12s;
+}
+
+.macro-field:hover{
+    background:#292929;
+    border-color:#1976d2;
+}
+
+.macro-checkbox{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    padding-top:8px;
+    font-size:15px;
+    cursor:pointer;
+}
+
+.macro-checkbox input{
+    width:18px;
+    height:18px;
+    cursor:pointer;
+}
+
+#close-modal{
+    align-self:center;
+
+    padding:10px 24px;
+    border:none;
+    border-radius:7px;
+
+    background:#1976d2;
+    color:white;
+
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#close-modal:hover{
+    background:#1565c0;
 }
 
 #reset{
@@ -247,6 +384,79 @@ body{
     transform:translateX(-50%) scale(.96);
 }
 
+.macro-capture-overlay{
+    position:fixed;
+    inset:0;
+
+    display:none;
+    align-items:center;
+    justify-content:center;
+
+    padding:20px;
+
+    background:rgba(0,0,0,.9);
+    z-index:1000;
+}
+
+.macro-capture-overlay.open{
+    display:flex;
+}
+
+.macro-capture-message{
+    max-width:650px;
+
+    padding:30px;
+    border:2px solid #1976d2;
+    border-radius:12px;
+
+    background:#222;
+    color:white;
+
+    text-align:center;
+    font-size:clamp(18px,2vw,28px);
+    font-weight:bold;
+
+    box-shadow:0 0 30px rgba(25,118,210,.5);
+}
+
+.macro-capture-message small{
+    display:block;
+    margin-top:18px;
+
+    color:#bbb;
+    font-size:16px;
+    font-weight:normal;
+}
+
+.element button::after{
+    content:attr(data-macro);
+
+    position:absolute;
+    right:clamp(5px, .7vw, 12px);
+    top:50%;
+
+    transform:translateY(-50%);
+
+    max-width:45%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+
+    font-size:clamp(9px, .8vw, 14px);
+    font-weight:bold;
+
+    opacity:0;
+    color:inherit;
+
+    text-shadow:0 1px 4px black;
+
+    transition:opacity .15s;
+}
+
+body.show-macro-labels .element button::after{
+    opacity:.9;
+}
+
 </style>
 </head>
 
@@ -263,7 +473,7 @@ body{
 
     <div class="elements">
 
-        <div class="element counter" data-value="0">
+        <div class="element counter" data-counter-id="player1-element1" data-value="0">
             <div class="gear">⚙</div>
             <div class="element-name"></div>
             <button class="plus">+</button>
@@ -272,7 +482,7 @@ body{
             <button class="minus">−</button>
         </div>
 
-        <div class="element counter" data-value="0">
+        <div class="element counter" data-counter-id="player1-element2" data-value="0">
             <div class="gear">⚙</div>
             <div class="element-name"></div>
             <button class="plus">+</button>
@@ -297,7 +507,7 @@ body{
 
     <div class="elements">
 
-        <div class="element counter" data-value="0">
+        <div class="element counter" data-counter-id="player2-element1" data-value="0">
             <div class="gear">⚙</div>
             <div class="element-name"></div>
             <button class="plus">+</button>
@@ -306,7 +516,7 @@ body{
             <button class="minus">−</button>
         </div>
 
-        <div class="element counter" data-value="0">
+        <div class="element counter" data-counter-id="player2-element2" data-value="0">
             <div class="gear">⚙</div>
             <div class="element-name"></div>
             <button class="plus">+</button>
@@ -320,7 +530,57 @@ body{
 </div>
 
 <div class="modal" id="modal">
-    <div class="modal-content"></div>
+    <div class="modal-content">
+
+        <h2>Configurar elemento</h2>
+
+        <div class="color-options"></div>
+
+        <div class="macro-settings">
+
+            <label class="macro-row">
+                <span>Macro para aumentar:</span>
+
+                <button
+                    type="button"
+                    class="macro-field"
+                    id="macro-plus"
+                >
+                    Não definida
+                </button>
+            </label>
+
+            <label class="macro-row">
+                <span>Macro para diminuir:</span>
+
+                <button
+                    type="button"
+                    class="macro-field"
+                    id="macro-minus"
+                >
+                    Não definida
+                </button>
+            </label>
+
+            <label class="macro-checkbox">
+                <input type="checkbox" id="show-macro-labels">
+                Exibir macros nos botões dos elementos
+            </label>
+
+        </div>
+
+        <button type="button" id="close-modal">
+            Fechar
+        </button>
+
+    </div>
+</div>
+
+<div class="macro-capture-overlay" id="macro-capture-overlay">
+    <div class="macro-capture-message">
+        Pressione uma tecla para salvar
+        <small>Pressione ESC para sair</small>
+    </div>
 </div>
 
 <button id="reset">↺</button>
@@ -328,158 +588,109 @@ body{
 <script>
 
 const colors = [
-    {name:'Água',color:'#2196F3'},
-    {name:'Fogo',color:'#eb4646'},
-    {name:'Terra',color:'#795548'},
-    {name:'Trevas',color:'#111'},
-    {name:'Vento',color:'#56ba5a'},
-    {name:'Luz',color:'#ECECEC',text:'#000'}
+    { name:"Água",   color:"#2196F3" },
+    { name:"Fogo",   color:"#D32F2F" },
+    { name:"Terra",  color:"#795548" },
+    { name:"Trevas", color:"#111" },
+    { name:"Vento",  color:"#43A047" },
+    { name:"Luz",    color:"#ECECEC", text:"#000" }
 ];
 
-let currentElement=null;
+const MACROS_STORAGE_KEY = "tracker-element-macros";
+const SHOW_MACROS_STORAGE_KEY = "tracker-show-macro-labels";
 
-document.querySelectorAll(".counter").forEach(counter=>{
+const modal = document.getElementById("modal");
+const colorOptions = modal.querySelector(".color-options");
+
+const macroPlusField = document.getElementById("macro-plus");
+const macroMinusField = document.getElementById("macro-minus");
+
+const showMacroCheckbox =
+    document.getElementById("show-macro-labels");
+
+const closeModalButton =
+    document.getElementById("close-modal");
+
+const captureOverlay =
+    document.getElementById("macro-capture-overlay");
+
+const elementCounters = [
+    ...document.querySelectorAll(".element.counter")
+];
+
+let currentElement = null;
+let captureAction = null;
+let savedMacros = loadMacros();
+
+/* =========================
+   CONTADORES
+========================= */
+
+document.querySelectorAll(".counter").forEach(counter => {
 
     const valueEl = counter.querySelector(".value");
-
     const isLife = counter.classList.contains("life");
 
-    const min = 0;
+    const min = isLife ? -999 : 0;
     const max = isLife ? 999 : 20;
 
-    function refresh(){
+    function refresh() {
         valueEl.textContent = counter.dataset.value;
     }
 
-    counter.querySelector(".plus").onclick = ()=>{
+    counter.querySelector(".plus").onclick = () => {
 
         let value = Number(counter.dataset.value);
 
-        if (value >= max)
+        if (value >= max) {
             return;
+        }
 
         value++;
 
         counter.dataset.value = value;
-
         refresh();
 
         if (!isLife) {
             updateDelta(counter, 1);
         }
-
     };
 
-    counter.querySelector(".minus").onclick = ()=>{
+    counter.querySelector(".minus").onclick = () => {
 
         let value = Number(counter.dataset.value);
 
-        if (value <= min)
+        if (value <= min) {
             return;
+        }
 
         value--;
 
         counter.dataset.value = value;
-
         refresh();
 
         if (!isLife) {
             updateDelta(counter, -1);
         }
-
     };
 
 });
 
-const modal=document.getElementById("modal");
-const content=modal.querySelector(".modal-content");
+/* =========================
+   DELTAS
+========================= */
 
-colors.forEach(c=>{
+elementCounters.forEach(counter => {
 
-    const div=document.createElement("div");
-
-    div.className="color";
-    div.style.background=c.color;
-    div.style.color=c.text || "white";
-    div.innerHTML=c.name;
-
-    div.onclick=()=>{
-
-        currentElement.style.background=c.color;
-        currentElement.querySelector(".element-name").innerHTML=c.name;
-        currentElement.style.color=c.text || "white";
-
-        currentElement.querySelector(".value").style.color=c.text || "white";
-        currentElement.querySelector(".element-name").style.color=c.text || "white";
-
-        currentElement.querySelectorAll("button").forEach(b=>{
-            b.style.color=c.text || "white";
-        });
-
-        modal.style.display="none";
-
-    };
-
-    content.appendChild(div);
-
-});
-
-document.querySelectorAll(".gear").forEach(gear=>{
-
-    gear.onclick=()=>{
-
-        currentElement = gear.closest(".element");
-
-        modal.style.display="flex";
-
-    }
-
-});
-
-modal.onclick=e=>{
-    if(e.target===modal)
-        modal.style.display="none";
-};
-
-document.getElementById("reset").onclick = () => {
-
-    document.querySelectorAll(".life.counter").forEach(counter=>{
-
-        counter.dataset.value = 7;
-        counter.querySelector(".value").textContent = 7;
-
-    });
-
-    document.querySelectorAll(".element.counter").forEach(counter => {
-        counter.dataset.value = 0;
-        counter.querySelector(".value").textContent = 0;
-
-        const delta = counter.querySelector(".delta");
-
-        if (counter.deltaState) {
-            clearTimeout(counter.deltaState.timeout);
-            counter.deltaState.value = 0;
-            counter.deltaState.timeout = null;
-        }
-
-        delta.textContent = "";
-        delta.classList.remove(
-            "show",
-            "positive",
-            "negative"
-        );
-    });
-
-};
-
-document.querySelectorAll(".element.counter").forEach(counter => {
     counter.deltaState = {
-        value: 0,
-        timeout: null
+        value:0,
+        timeout:null
     };
+
 });
 
 function updateDelta(counter, change) {
+
     const delta = counter.querySelector(".delta");
     const state = counter.deltaState;
 
@@ -494,9 +705,12 @@ function updateDelta(counter, change) {
     delta.classList.remove("positive", "negative");
 
     if (state.value === 0) {
+
         delta.textContent = "";
         delta.classList.remove("show");
+
     } else {
+
         delta.textContent =
             state.value > 0
                 ? `+${state.value}`
@@ -510,16 +724,576 @@ function updateDelta(counter, change) {
     }
 
     state.timeout = setTimeout(() => {
+
         state.value = 0;
+        state.timeout = null;
+
         delta.textContent = "";
+
         delta.classList.remove(
             "show",
             "positive",
             "negative"
         );
-        state.timeout = null;
+
     }, 3000);
+
 }
+
+/* =========================
+   CORES DA MODAL
+========================= */
+
+colors.forEach(colorData => {
+
+    const colorButton = document.createElement("div");
+
+    colorButton.className = "color";
+    colorButton.dataset.colorName = colorData.name;
+
+    colorButton.style.background = colorData.color;
+    colorButton.style.color = colorData.text || "white";
+
+    colorButton.textContent = colorData.name;
+
+    colorButton.onclick = () => {
+
+        if (!currentElement) {
+            return;
+        }
+
+        currentElement.dataset.selectedColor =
+            colorData.name;
+
+        currentElement.style.background =
+            colorData.color;
+
+        currentElement.querySelector(
+            ".element-name"
+        ).textContent = colorData.name;
+
+        const textColor = colorData.text || "white";
+
+        currentElement.querySelector(
+            ".value"
+        ).style.color = textColor;
+
+        currentElement.querySelector(
+            ".element-name"
+        ).style.color = textColor;
+
+        currentElement.querySelectorAll(
+            "button"
+        ).forEach(button => {
+            button.style.color = textColor;
+        });
+
+        updateSelectedColor();
+
+        /*
+         * A modal não é fechada aqui.
+         * Ela somente fecha pelo botão "Fechar".
+         */
+    };
+
+    colorOptions.appendChild(colorButton);
+
+});
+
+function updateSelectedColor() {
+
+    if (!currentElement) {
+        return;
+    }
+
+    const selectedColor =
+        currentElement.dataset.selectedColor;
+
+    colorOptions.querySelectorAll(".color").forEach(button => {
+
+        const isSelected =
+            button.dataset.colorName === selectedColor;
+
+        button.classList.toggle(
+            "selected",
+            isSelected
+        );
+
+    });
+
+}
+
+/* =========================
+   ABRIR E FECHAR MODAL
+========================= */
+
+document.querySelectorAll(".gear").forEach(gear => {
+
+    gear.onclick = event => {
+
+        event.stopPropagation();
+
+        currentElement =
+            gear.closest(".element.counter");
+
+        updateSelectedColor();
+        updateMacroFields();
+
+        modal.classList.add("open");
+    };
+
+});
+
+closeModalButton.onclick = () => {
+
+    modal.classList.remove("open");
+    currentElement = null;
+
+};
+
+/*
+ * Não existe mais fechamento ao clicar no fundo da modal.
+ * Somente o botão "Fechar" fecha a janela.
+ */
+
+/* =========================
+   LOCAL STORAGE
+========================= */
+
+function loadMacros() {
+
+    try {
+
+        const data = localStorage.getItem(
+            MACROS_STORAGE_KEY
+        );
+
+        return data ? JSON.parse(data) : {};
+
+    } catch (error) {
+
+        console.error(
+            "Não foi possível carregar as macros:",
+            error
+        );
+
+        return {};
+    }
+
+}
+
+function saveMacros() {
+
+    try {
+
+        localStorage.setItem(
+            MACROS_STORAGE_KEY,
+            JSON.stringify(savedMacros)
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Não foi possível salvar as macros:",
+            error
+        );
+    }
+
+}
+
+function getCurrentElementMacros() {
+
+    if (!currentElement) {
+        return {};
+    }
+
+    const counterId =
+        currentElement.dataset.counterId;
+
+    return savedMacros[counterId] || {};
+
+}
+
+/* =========================
+   CAMPOS DE MACRO
+========================= */
+
+function updateMacroFields() {
+
+    const macros = getCurrentElementMacros();
+
+    macroPlusField.textContent =
+        macros.plus?.label || "Não definida";
+
+    macroMinusField.textContent =
+        macros.minus?.label || "Não definida";
+
+}
+
+macroPlusField.onclick = () => {
+    startMacroCapture("plus");
+};
+
+macroMinusField.onclick = () => {
+    startMacroCapture("minus");
+};
+
+function startMacroCapture(action) {
+
+    if (!currentElement) {
+        return;
+    }
+
+    captureAction = action;
+    captureOverlay.classList.add("open");
+
+}
+
+function stopMacroCapture() {
+
+    captureAction = null;
+    captureOverlay.classList.remove("open");
+
+}
+
+/* =========================
+   CONVERSÃO DE TECLAS
+========================= */
+
+function normalizeKey(key) {
+
+    if (key.length === 1) {
+        return key.toLowerCase();
+    }
+
+    return key;
+}
+
+function getReadableKey(key) {
+
+    const readableKeys = {
+        " ":"Espaço",
+        "ArrowUp":"↑",
+        "ArrowDown":"↓",
+        "ArrowLeft":"←",
+        "ArrowRight":"→",
+        "Enter":"Enter",
+        "Tab":"Tab",
+        "Backspace":"Backspace",
+        "Delete":"Delete",
+        "Insert":"Insert",
+        "Home":"Home",
+        "End":"End",
+        "PageUp":"Page Up",
+        "PageDown":"Page Down"
+    };
+
+    if (readableKeys[key]) {
+        return readableKeys[key];
+    }
+
+    if (key.length === 1) {
+        return key.toUpperCase();
+    }
+
+    return key;
+}
+
+function createMacroFromEvent(event) {
+
+    const modifierKeys = [
+        "Control",
+        "Shift",
+        "Alt",
+        "Meta"
+    ];
+
+    if (modifierKeys.includes(event.key)) {
+        return null;
+    }
+
+    const parts = [];
+
+    if (event.ctrlKey) {
+        parts.push("Ctrl");
+    }
+
+    if (event.altKey) {
+        parts.push("Alt");
+    }
+
+    if (event.shiftKey) {
+        parts.push("Shift");
+    }
+
+    if (event.metaKey) {
+        parts.push("Meta");
+    }
+
+    parts.push(getReadableKey(event.key));
+
+    return {
+        code:event.code,
+        key:normalizeKey(event.key),
+
+        ctrl:event.ctrlKey,
+        alt:event.altKey,
+        shift:event.shiftKey,
+        meta:event.metaKey,
+
+        label:parts.join(" + ")
+    };
+
+}
+
+function macroMatchesEvent(macro, event) {
+
+    if (!macro) {
+        return false;
+    }
+
+    const sameModifiers =
+        Boolean(macro.ctrl) === event.ctrlKey &&
+        Boolean(macro.alt) === event.altKey &&
+        Boolean(macro.shift) === event.shiftKey &&
+        Boolean(macro.meta) === event.metaKey;
+
+    if (!sameModifiers) {
+        return false;
+    }
+
+    if (macro.code) {
+        return macro.code === event.code;
+    }
+
+    return macro.key === normalizeKey(event.key);
+
+}
+
+/* =========================
+   CAPTURA E EXECUÇÃO
+========================= */
+
+document.addEventListener("keydown", event => {
+
+    /*
+     * Enquanto a tela de captura estiver aberta,
+     * qualquer tecla é usada para configurar a macro.
+     */
+    if (captureAction) {
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        if (event.key === "Escape") {
+
+            /*
+             * Cancela sem alterar a macro anterior.
+             */
+            stopMacroCapture();
+            return;
+        }
+
+        const macro = createMacroFromEvent(event);
+
+        /*
+         * Espera uma tecla que não seja somente
+         * Ctrl, Shift, Alt ou Meta.
+         */
+        if (!macro || event.repeat) {
+            return;
+        }
+
+        const counterId =
+            currentElement.dataset.counterId;
+
+        if (!savedMacros[counterId]) {
+            savedMacros[counterId] = {};
+        }
+
+        savedMacros[counterId][captureAction] = macro;
+
+        saveMacros();
+        stopMacroCapture();
+
+        updateMacroFields();
+        applyMacroLabels();
+
+        return;
+    }
+
+    /*
+     * Não executa macros enquanto a modal estiver aberta.
+     */
+    if (modal.classList.contains("open")) {
+        return;
+    }
+
+    /*
+     * Evita ativar contadores enquanto o usuário
+     * estiver digitando em um campo.
+     */
+    const activeElement = document.activeElement;
+
+    const isTyping =
+        activeElement &&
+        (
+            activeElement.tagName === "INPUT" ||
+            activeElement.tagName === "TEXTAREA" ||
+            activeElement.tagName === "SELECT" ||
+            activeElement.isContentEditable
+        );
+
+    if (isTyping || event.repeat) {
+        return;
+    }
+
+    const matchingActions = [];
+
+    elementCounters.forEach(counter => {
+
+        const counterId =
+            counter.dataset.counterId;
+
+        const macros =
+            savedMacros[counterId] || {};
+
+        if (macroMatchesEvent(macros.plus, event)) {
+
+            matchingActions.push(
+                counter.querySelector("button.plus")
+            );
+
+        }
+
+        if (macroMatchesEvent(macros.minus, event)) {
+
+            matchingActions.push(
+                counter.querySelector("button.minus")
+            );
+
+        }
+
+    });
+
+    if (matchingActions.length === 0) {
+        return;
+    }
+
+    event.preventDefault();
+
+    matchingActions.forEach(button => {
+        button.click();
+    });
+
+}, true);
+
+/* =========================
+   TEXTO DAS MACROS
+========================= */
+
+function applyMacroLabels() {
+
+    elementCounters.forEach(counter => {
+
+        const counterId =
+            counter.dataset.counterId;
+
+        const macros =
+            savedMacros[counterId] || {};
+
+        const plusButton =
+            counter.querySelector("button.plus");
+
+        const minusButton =
+            counter.querySelector("button.minus");
+
+        plusButton.dataset.macro =
+            macros.plus?.label || "";
+
+        minusButton.dataset.macro =
+            macros.minus?.label || "";
+
+    });
+
+}
+
+function applyMacroVisibility(show) {
+
+    document.body.classList.toggle(
+        "show-macro-labels",
+        show
+    );
+
+    showMacroCheckbox.checked = show;
+
+}
+
+showMacroCheckbox.onchange = () => {
+
+    const show = showMacroCheckbox.checked;
+
+    localStorage.setItem(
+        SHOW_MACROS_STORAGE_KEY,
+        String(show)
+    );
+
+    applyMacroVisibility(show);
+
+};
+
+/* =========================
+   RESET
+========================= */
+
+document.getElementById("reset").onclick = () => {
+
+    document.querySelectorAll(".life.counter").forEach(counter => {
+
+        counter.dataset.value = 7;
+        counter.querySelector(".value").textContent = 7;
+
+    });
+
+    elementCounters.forEach(counter => {
+
+        counter.dataset.value = 0;
+        counter.querySelector(".value").textContent = 0;
+
+        const delta =
+            counter.querySelector(".delta");
+
+        clearTimeout(counter.deltaState.timeout);
+
+        counter.deltaState.value = 0;
+        counter.deltaState.timeout = null;
+
+        delta.textContent = "";
+
+        delta.classList.remove(
+            "show",
+            "positive",
+            "negative"
+        );
+
+    });
+
+};
+
+/* =========================
+   INICIALIZAÇÃO
+========================= */
+
+const savedMacroVisibility =
+    localStorage.getItem(SHOW_MACROS_STORAGE_KEY);
+
+const shouldShowMacros =
+    savedMacroVisibility === null
+        ? true
+        : savedMacroVisibility === "true";
+
+applyMacroLabels();
+applyMacroVisibility(shouldShowMacros);
 
 </script>
 
