@@ -1,0 +1,1 @@
+Repositório que gera um html para rastrears as cordas e elementos dos jogadores durante a partida de Oroman.
