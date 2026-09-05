@@ -100,26 +100,59 @@ function initializeCounters(player, playerIndex) {
   $$(".counter", player).forEach((counter, counterIndex) => {
     counter.dataset.counterId = `player${playerIndex + 1}-${counter.dataset.kind}-${counter.dataset.slot || "life"}`;
     counter.deltaState = { value: 0, timeout: null };
-    $(".plus", counter).addEventListener("click", () => changeCounter(counter, 1));
+    bindPlusButton(counter);
     $(".minus", counter).addEventListener("click", () => changeCounter(counter, -1));
-    $(".counter-settings", counter).addEventListener("click", event => {
-      event.stopPropagation();
-      openCounterSettings(counter);
-    });
     if (counterIndex > 0) applyResourceColor(counter, COLORS[(playerIndex * 2 + counterIndex - 1) % COLORS.length]);
   });
   applyMacroLabels();
+}
+
+function bindPlusButton(counter) {
+  const plus = $(".plus", counter);
+  let settingsTimer = null;
+
+  plus.addEventListener("click", () => {
+    if (plus.dataset.suppressClick === "true") {
+      delete plus.dataset.suppressClick;
+      return;
+    }
+    changeCounter(counter, 1);
+  });
+
+  plus.addEventListener("pointerdown", event => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    plus.setPointerCapture?.(event.pointerId);
+    plus.classList.add("holding");
+    settingsTimer = setTimeout(() => {
+      plus.dataset.suppressClick = "true";
+      setTimeout(() => delete plus.dataset.suppressClick, 1000);
+      plus.classList.remove("holding");
+      navigator.vibrate?.(35);
+      openCounterSettings(counter);
+    }, 650);
+  });
+
+  const cancelSettingsHold = () => {
+    clearTimeout(settingsTimer);
+    plus.classList.remove("holding");
+  };
+
+  plus.addEventListener("pointerup", cancelSettingsHold);
+  plus.addEventListener("pointercancel", cancelSettingsHold);
+  plus.addEventListener("contextmenu", event => event.preventDefault());
 }
 
 function changeCounter(counter, delta) {
   const life = counter.dataset.kind === "life";
   const min = life ? -999 : 0;
   const max = life ? 999 : 20;
-  const next = Math.max(min, Math.min(max, Number(counter.dataset.value) + delta));
-  if (next === Number(counter.dataset.value)) return;
+  const previous = Number(counter.dataset.value);
+  const next = Math.max(min, Math.min(max, previous + delta));
+  const appliedDelta = next - previous;
+  if (appliedDelta === 0) return;
   counter.dataset.value = next;
   $(".value", counter).textContent = next;
-  updateDelta(counter, delta);
+  updateDelta(counter, appliedDelta);
 }
 
 function updateDelta(counter, change) {
@@ -146,6 +179,13 @@ function passTurn() {
   const position = order.indexOf(currentPlayer);
   currentPlayer = order[(position + 1) % order.length];
   refreshCurrentPlayer();
+  grantTurnResources(currentPlayer);
+}
+
+function grantTurnResources(playerIndex) {
+  $$(".resource.counter", players[playerIndex].element).forEach(counter => {
+    changeCounter(counter, 2);
+  });
 }
 
 function getTurnOrder(count, direction) {
@@ -209,6 +249,9 @@ function closeModal(modal, resume = true) {
 $$('[data-close-modal]').forEach(button => button.addEventListener("click", () => closeModal(button.closest(".modal"))));
 
 $("#start-game").addEventListener("click", () => {
+  if (!gameStarted) {
+    grantTurnResources(currentPlayer);
+  }
   gameStarted = true;
   closeModal(optionsModal, false);
   startTimer();
@@ -425,11 +468,11 @@ function updateFullscreenButton() {
 function getOrientation(count, index) {
   if (!isTabletop) return "front";
   const orientations = {
-    2: ["left", "right"],
-    3: ["left", "right", "front"],
-    4: ["left", "right", "left", "right"],
-    5: ["left", "right", "left", "right", "front"],
-    6: ["left", "right", "left", "right", "left", "right"]
+    2: ["right", "left"],
+    3: ["right", "left", "opposite"],
+    4: ["right", "left", "right", "left"],
+    5: ["right", "left", "right", "left", "opposite"],
+    6: ["right", "left", "right", "left", "right", "left"]
   };
   return orientations[count][index];
 }

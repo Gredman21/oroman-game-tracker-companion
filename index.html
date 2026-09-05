@@ -104,27 +104,24 @@
     <article class="player">
       <div class="player-face">
         <input class="player-name" aria-label="Nome do jogador">
+        <div class="player-timer" hidden><span>TEMPO</span><strong>00:00</strong></div>
         <section class="life counter" data-kind="life" data-value="7">
-          <button class="counter-settings" type="button" aria-label="Configurar cordas">⚙</button>
           <button class="minus" type="button" aria-label="Diminuir cordas">−</button>
           <div class="counter-center"><span class="counter-label">CORDAS</span><strong class="value">7</strong><em class="delta"></em></div>
-          <button class="plus" type="button" aria-label="Aumentar cordas">+</button>
+          <button class="plus" type="button" aria-label="Aumentar cordas. Segure para configurar.">+</button>
         </section>
         <section class="resources">
           <div class="resource counter" data-kind="resource" data-slot="1" data-value="0">
-            <button class="counter-settings" type="button" aria-label="Configurar recurso">⚙</button>
-            <button class="plus" type="button" aria-label="Aumentar recurso">+</button>
+            <button class="plus" type="button" aria-label="Aumentar recurso. Segure para configurar.">+</button>
             <div class="counter-center"><span class="counter-label">ATEMPORAL</span><strong class="value">0</strong><em class="delta"></em></div>
             <button class="minus" type="button" aria-label="Diminuir recurso">−</button>
           </div>
           <div class="resource counter" data-kind="resource" data-slot="2" data-value="0">
-            <button class="counter-settings" type="button" aria-label="Configurar recurso">⚙</button>
-            <button class="plus" type="button" aria-label="Aumentar recurso">+</button>
+            <button class="plus" type="button" aria-label="Aumentar recurso. Segure para configurar.">+</button>
             <div class="counter-center"><span class="counter-label">ATEMPORAL</span><strong class="value">0</strong><em class="delta"></em></div>
             <button class="minus" type="button" aria-label="Diminuir recurso">−</button>
           </div>
         </section>
-        <div class="player-timer" hidden><span>TEMPO</span><strong>00:00</strong></div>
       </div>
     </article>
   </template>
