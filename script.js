@@ -10,6 +10,7 @@ const COLORS = [
 const MACROS_KEY = "tracker-element-macros";
 const SHOW_MACROS_KEY = "tracker-show-macro-labels";
 const PREFS_KEY = "tracker-game-settings";
+const MAX_TIME_SECONDS = 99 * 60 + 99;
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -49,6 +50,7 @@ setupForm.addEventListener("submit", event => {
   event.preventDefault();
   const minutes = clampNumber($("#minutes").value, 0, 99);
   const seconds = clampNumber($("#seconds").value, 0, 99);
+  const turnTimeBonus = clampNumber($("#turn-time-bonus").value, 0, 99);
   config = {
     count: Number($("#player-count").value),
     direction: $("input[name='direction']:checked").value,
@@ -56,7 +58,8 @@ setupForm.addEventListener("submit", event => {
     timerMode: $("input[name='timer-mode']:checked").value,
     minutes,
     seconds,
-    initialSeconds: minutes * 60 + seconds
+    turnTimeBonus,
+    initialSeconds: Math.min(MAX_TIME_SECONDS, minutes * 60 + seconds)
   };
   if (config.timerEnabled && config.initialSeconds <= 0) {
     alert("Defina um tempo maior que zero.");
@@ -180,12 +183,27 @@ function passTurn() {
   currentPlayer = order[(position + 1) % order.length];
   refreshCurrentPlayer();
   grantTurnResources(currentPlayer);
+  addTurnTime(currentPlayer);
+  refreshTimers();
+  startTimer();
 }
 
 function grantTurnResources(playerIndex) {
   $$(".resource.counter", players[playerIndex].element).forEach(counter => {
     changeCounter(counter, 2);
   });
+}
+
+function addTurnTime(playerIndex) {
+  if (!config.timerEnabled || config.turnTimeBonus <= 0) return;
+  if (config.timerMode === "total") {
+    totalTime = Math.min(MAX_TIME_SECONDS, totalTime + config.turnTimeBonus);
+  } else {
+    players[playerIndex].remaining = Math.min(
+      MAX_TIME_SECONDS,
+      players[playerIndex].remaining + config.turnTimeBonus
+    );
+  }
 }
 
 function getTurnOrder(count, direction) {
@@ -323,10 +341,8 @@ function refreshTimers() {
 }
 
 function formatTime(totalSeconds) {
-  const configuredMinutes = config?.minutes ?? 0;
-  const overflowThreshold = configuredMinutes * 60 + 59;
-  if ((config?.seconds ?? 0) > 59 && totalSeconds > overflowThreshold) {
-    return `${String(configuredMinutes).padStart(2, "0")}:${String(totalSeconds - configuredMinutes * 60).padStart(2, "0")}`;
+  if (totalSeconds > 99 * 60 + 59) {
+    return `99:${String(totalSeconds - 99 * 60).padStart(2, "0")}`;
   }
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -469,9 +485,9 @@ function getOrientation(count, index) {
   if (!isTabletop) return "front";
   const orientations = {
     2: ["right", "left"],
-    3: ["right", "left", "opposite"],
+    3: ["right", "left", "front"],
     4: ["right", "left", "right", "left"],
-    5: ["right", "left", "right", "left", "opposite"],
+    5: ["right", "left", "right", "left", "front"],
     6: ["right", "left", "right", "left", "right", "left"]
   };
   return orientations[count][index];
@@ -512,6 +528,7 @@ function restorePreferences() {
   if (mode) mode.checked = true;
   $("#minutes").value = saved.minutes ?? 50;
   $("#seconds").value = saved.seconds ?? 0;
+  $("#turn-time-bonus").value = saved.turnTimeBonus ?? 0;
 }
 
 function clampNumber(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
