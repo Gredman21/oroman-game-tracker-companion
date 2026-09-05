@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <meta name="theme-color" content="#101319">
-  <title>Tracker Oroman TCG</title>
+  <title>Tracker TCG</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main id="setup-screen" class="screen setup-screen">
     <form id="setup-form" class="setup-card">
       <div class="setup-heading">
-        <span class="eyebrow">TRACKER OROMAN TCG</span>
+        <span class="eyebrow">TRACKER TCG</span>
         <h1>Configurar partida</h1>
       </div>
 
@@ -58,13 +58,14 @@
           </div>
         </div>
 
-        <label class="field">
+        <div class="field">
           <span>Tempo adicional por turno</span>
-          <span class="turn-time-input">
-            <input id="turn-time-bonus" type="number" min="0" max="99" value="0" inputmode="numeric">
-            <small>segundos</small>
-          </span>
-        </label>
+          <div class="time-inputs">
+            <label><input id="turn-bonus-minutes" type="number" min="0" max="99" value="0" inputmode="numeric"><small>min</small></label>
+            <b>:</b>
+            <label><input id="turn-bonus-seconds" type="number" min="0" max="99" value="0" inputmode="numeric"><small>seg</small></label>
+          </div>
+        </div>
       </div>
 
       <button class="primary-button" type="submit">Montar mesa</button>

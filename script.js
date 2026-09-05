@@ -50,7 +50,8 @@ setupForm.addEventListener("submit", event => {
   event.preventDefault();
   const minutes = clampNumber($("#minutes").value, 0, 99);
   const seconds = clampNumber($("#seconds").value, 0, 99);
-  const turnTimeBonus = clampNumber($("#turn-time-bonus").value, 0, 99);
+  const turnBonusMinutes = clampNumber($("#turn-bonus-minutes").value, 0, 99);
+  const turnBonusSeconds = clampNumber($("#turn-bonus-seconds").value, 0, 99);
   config = {
     count: Number($("#player-count").value),
     direction: $("input[name='direction']:checked").value,
@@ -58,7 +59,9 @@ setupForm.addEventListener("submit", event => {
     timerMode: $("input[name='timer-mode']:checked").value,
     minutes,
     seconds,
-    turnTimeBonus,
+    turnBonusMinutes,
+    turnBonusSeconds,
+    turnTimeBonusSeconds: turnBonusMinutes * 60 + turnBonusSeconds,
     initialSeconds: Math.min(MAX_TIME_SECONDS, minutes * 60 + seconds)
   };
   if (config.timerEnabled && config.initialSeconds <= 0) {
@@ -178,6 +181,10 @@ function clearDelta(counter) {
 
 function passTurn() {
   if (!players.length) return;
+  if (!gameStarted) {
+    startGame();
+    return;
+  }
   const order = getTurnOrder(config.count, config.direction);
   const position = order.indexOf(currentPlayer);
   currentPlayer = order[(position + 1) % order.length];
@@ -188,6 +195,14 @@ function passTurn() {
   startTimer();
 }
 
+function startGame() {
+  if (!gameStarted) {
+    grantTurnResources(currentPlayer);
+    gameStarted = true;
+  }
+  startTimer();
+}
+
 function grantTurnResources(playerIndex) {
   $$(".resource.counter", players[playerIndex].element).forEach(counter => {
     changeCounter(counter, 2);
@@ -195,13 +210,13 @@ function grantTurnResources(playerIndex) {
 }
 
 function addTurnTime(playerIndex) {
-  if (!config.timerEnabled || config.turnTimeBonus <= 0) return;
+  if (!config.timerEnabled || config.turnTimeBonusSeconds <= 0) return;
   if (config.timerMode === "total") {
-    totalTime = Math.min(MAX_TIME_SECONDS, totalTime + config.turnTimeBonus);
+    totalTime = Math.min(MAX_TIME_SECONDS, totalTime + config.turnTimeBonusSeconds);
   } else {
     players[playerIndex].remaining = Math.min(
       MAX_TIME_SECONDS,
-      players[playerIndex].remaining + config.turnTimeBonus
+      players[playerIndex].remaining + config.turnTimeBonusSeconds
     );
   }
 }
@@ -267,12 +282,8 @@ function closeModal(modal, resume = true) {
 $$('[data-close-modal]').forEach(button => button.addEventListener("click", () => closeModal(button.closest(".modal"))));
 
 $("#start-game").addEventListener("click", () => {
-  if (!gameStarted) {
-    grantTurnResources(currentPlayer);
-  }
-  gameStarted = true;
+  startGame();
   closeModal(optionsModal, false);
-  startTimer();
 });
 
 $("#restart-game").addEventListener("click", () => {
@@ -484,7 +495,7 @@ function updateFullscreenButton() {
 function getOrientation(count, index) {
   if (!isTabletop) return "front";
   const orientations = {
-    2: ["right", "left"],
+    2: ["left", "right"],
     3: ["right", "left", "front"],
     4: ["right", "left", "right", "left"],
     5: ["right", "left", "right", "left", "front"],
@@ -528,7 +539,9 @@ function restorePreferences() {
   if (mode) mode.checked = true;
   $("#minutes").value = saved.minutes ?? 50;
   $("#seconds").value = saved.seconds ?? 0;
-  $("#turn-time-bonus").value = saved.turnTimeBonus ?? 0;
+  const previousBonus = saved.turnTimeBonus ?? saved.turnTimeBonusSeconds ?? 0;
+  $("#turn-bonus-minutes").value = saved.turnBonusMinutes ?? Math.floor(previousBonus / 60);
+  $("#turn-bonus-seconds").value = saved.turnBonusSeconds ?? previousBonus % 60;
 }
 
 function clampNumber(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
